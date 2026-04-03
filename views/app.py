@@ -11,12 +11,12 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from tkcalendar import DateEntry
 from PIL import Image, ImageTk, ImageDraw
+from filtros_export import exportar_con_filtro_excel, exportar_con_filtro_pdf
 
-# ══════════════════════════════════════════════════════════
-#  FAVICON
-# ══════════════════════════════════════════════════════════
+
+# FAVICON
 def generar_favicon():
-    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "favicon.ico")
+    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../favicon.ico")
     if not os.path.exists(ruta):
         img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
@@ -25,42 +25,25 @@ def generar_favicon():
         img.save(ruta, format="ICO")
     return ruta
 
-# ══════════════════════════════════════════════════════════
-#  TEMAS
-# ══════════════════════════════════════════════════════════
+
+# TEMAS
 TEMAS = {
     "Claro": {
-        "bg": "#f4f6f9",
-        "fg": "#1a2b3c",
-        "entry_bg": "#ffffff",
-        "entry_fg": "#1a2b3c",
-        "btn_bg": "#e0e0e0",
-        "label_fg": "#2c3e50",
-        "tabla_bg": "#ffffff",
-        "tabla_fg": "#1a2b3c",
-        "header_bg": "#1a3a5c",
-        "header_fg": "#ffffff",
-        "select_bg": "#1a3a5c",
-        "select_fg": "#ffffff",
+        "bg": "#f4f6f9", "fg": "#1a2b3c", "entry_bg": "#ffffff",
+        "entry_fg": "#1a2b3c", "btn_bg": "#e0e0e0", "label_fg": "#2c3e50",
+        "tabla_bg": "#ffffff", "tabla_fg": "#1a2b3c", "header_bg": "#1a3a5c",
+        "header_fg": "#ffffff", "select_bg": "#1a3a5c", "select_fg": "#ffffff",
     },
     "Oscuro": {
-        "bg": "#1a1e2e",
-        "fg": "#e8ecf0",
-        "entry_bg": "#2c3244",
-        "entry_fg": "#e8ecf0",
-        "btn_bg": "#2c3244",
-        "label_fg": "#a8bcce",
-        "tabla_bg": "#2a3244",
-        "tabla_fg": "#e8ecf0",
-        "header_bg": "#0d1520",
-        "header_fg": "#7eb8f7",
-        "select_bg": "#3a6ea5",
-        "select_fg": "#ffffff",
+        "bg": "#1a1e2e", "fg": "#e8ecf0", "entry_bg": "#2c3244",
+        "entry_fg": "#e8ecf0", "btn_bg": "#2c3244", "label_fg": "#a8bcce",
+        "tabla_bg": "#2a3244", "tabla_fg": "#e8ecf0", "header_bg": "#0d1520",
+        "header_fg": "#7eb8f7", "select_bg": "#3a6ea5", "select_fg": "#ffffff",
     }
 }
 
 tema_actual = "Claro"
-widgets_tema = []  # lista de (widget, tipo)
+widgets_tema = []
 
 def registrar(widget, tipo):
     widgets_tema.append((widget, tipo))
@@ -70,7 +53,6 @@ def aplicar_tema(nombre):
     global tema_actual
     tema_actual = nombre
     t = TEMAS[nombre]
-
     style = ttk.Style()
     style.theme_use("clam")
     style.configure("TNotebook", background=t["bg"])
@@ -80,19 +62,13 @@ def aplicar_tema(nombre):
               background=[("selected", t["header_bg"])],
               foreground=[("selected", t["header_fg"])])
     style.configure("TFrame", background=t["bg"])
-    style.configure("Treeview",
-                    background=t["tabla_bg"],
-                    foreground=t["tabla_fg"],
-                    fieldbackground=t["tabla_bg"],
-                    rowheight=22)
-    style.configure("Treeview.Heading",
-                    background=t["header_bg"],
-                    foreground=t["header_fg"],
-                    font=("Arial", 9, "bold"))
+    style.configure("Treeview", background=t["tabla_bg"], foreground=t["tabla_fg"],
+                    fieldbackground=t["tabla_bg"], rowheight=22)
+    style.configure("Treeview.Heading", background=t["header_bg"],
+                    foreground=t["header_fg"], font=("Arial", 9, "bold"))
     style.map("Treeview",
               background=[("selected", t["select_bg"])],
               foreground=[("selected", t["select_fg"])])
-
     for widget, tipo in widgets_tema:
         try:
             if tipo == "bg":
@@ -102,15 +78,15 @@ def aplicar_tema(nombre):
             elif tipo == "title":
                 widget.configure(bg=t["bg"], fg=t["header_bg"] if nombre == "Claro" else t["header_fg"])
             elif tipo == "entry":
-                widget.configure(bg=t["entry_bg"], fg=t["entry_fg"],
-                                 insertbackground=t["entry_fg"])
+                widget.configure(bg=t["entry_bg"], fg=t["entry_fg"], insertbackground=t["entry_fg"])
             elif tipo == "img_label":
                 widget.configure(bg=t["entry_bg"])
         except Exception:
             pass
 
-# ── Base de datos ──────────────────────────────────────────────────────────
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "minesys.db")
+
+# BASE DE DATOS
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../models", "minesys.db")
 
 def conectar():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -121,55 +97,28 @@ def inicializar_db():
     cur = con.cursor()
     cur.executescript("""
     CREATE TABLE IF NOT EXISTS yacimientos (
-        codigo    TEXT PRIMARY KEY,
-        nombre    TEXT NOT NULL,
-        ubicacion TEXT NOT NULL,
-        mineral   TEXT NOT NULL,
-        metodo    TEXT NOT NULL,
-        fecha     TEXT NOT NULL,
-        reservas  INTEGER NOT NULL,
-        vida      INTEGER NOT NULL,
-        estado    TEXT NOT NULL
+        codigo TEXT PRIMARY KEY, nombre TEXT NOT NULL, ubicacion TEXT NOT NULL,
+        mineral TEXT NOT NULL, metodo TEXT NOT NULL, fecha TEXT NOT NULL,
+        reservas INTEGER NOT NULL, vida INTEGER NOT NULL, estado TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS maquinaria (
-        serie       TEXT PRIMARY KEY,
-        tipo        TEXT NOT NULL,
-        marca       TEXT NOT NULL,
-        modelo      TEXT NOT NULL,
-        capacidad   REAL NOT NULL,
-        anio        INTEGER NOT NULL,
-        horas       REAL NOT NULL,
-        combustible TEXT NOT NULL,
-        ubicacion   TEXT NOT NULL,
-        estado      TEXT NOT NULL
+        serie TEXT PRIMARY KEY, tipo TEXT NOT NULL, marca TEXT NOT NULL,
+        modelo TEXT NOT NULL, capacidad REAL NOT NULL, anio INTEGER NOT NULL,
+        horas REAL NOT NULL, combustible TEXT NOT NULL, ubicacion TEXT NOT NULL, estado TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS empleados (
-        id            TEXT PRIMARY KEY,
-        nombre        TEXT NOT NULL,
-        cargo         TEXT NOT NULL,
-        edad          INTEGER NOT NULL,
-        telefono      TEXT NOT NULL,
-        correo        TEXT NOT NULL,
-        direccion     TEXT NOT NULL,
-        fecha_ingreso TEXT NOT NULL,
-        salario       REAL NOT NULL
+        id TEXT PRIMARY KEY, nombre TEXT NOT NULL, cargo TEXT NOT NULL,
+        edad INTEGER NOT NULL, telefono TEXT NOT NULL, correo TEXT NOT NULL,
+        direccion TEXT NOT NULL, fecha_ingreso TEXT NOT NULL, salario REAL NOT NULL
     );
     CREATE TABLE IF NOT EXISTS seguridad (
-        id          TEXT PRIMARY KEY,
-        zona        TEXT NOT NULL,
-        riesgo      TEXT NOT NULL,
-        descripcion TEXT NOT NULL,
-        fecha       TEXT NOT NULL,
-        responsable TEXT NOT NULL,
-        accion      TEXT NOT NULL,
-        estado      TEXT NOT NULL
+        id TEXT PRIMARY KEY, zona TEXT NOT NULL, riesgo TEXT NOT NULL,
+        descripcion TEXT NOT NULL, fecha TEXT NOT NULL, responsable TEXT NOT NULL,
+        accion TEXT NOT NULL, estado TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS auditoria (
-        id        INTEGER PRIMARY KEY AUTOINCREMENT,
-        tabla     TEXT,
-        operacion TEXT,
-        fecha     TEXT DEFAULT (datetime('now')),
-        detalle   TEXT
+        id INTEGER PRIMARY KEY AUTOINCREMENT, tabla TEXT, operacion TEXT,
+        fecha TEXT DEFAULT (datetime('now')), detalle TEXT
     );
     """)
     try:
@@ -244,21 +193,20 @@ def inicializar_db():
     con.commit()
     con.close()
 
-# ── Ventana principal ──────────────────────────────────────────────────────
+
+# VENTANA PRINCIPAL
 inicializar_db()
 
 root = tk.Tk()
 root.geometry("1050x680")
 root.title("MineSys - Sistema Minero")
 
-# Favicon
 try:
     favicon_path = generar_favicon()
     root.iconbitmap(favicon_path)
 except Exception:
     pass
 
-# ── Barra superior con selector de tema ───────────────────────────────────
 topbar = tk.Frame(root, height=45)
 topbar.pack(side="top", fill="x")
 registrar(topbar, "bg")
@@ -272,7 +220,6 @@ frm_tema.pack(side="right", padx=15)
 registrar(frm_tema, "bg")
 
 tk.Label(frm_tema, text="Tema:", font=("Arial", 9)).pack(side="left", padx=4)
-
 tema_var = tk.StringVar(value="Claro")
 
 def cambiar_tema():
@@ -284,7 +231,6 @@ for nombre in TEMAS:
     rb.pack(side="left", padx=3)
     registrar(rb, "label")
 
-# ── Notebook ──────────────────────────────────────────────────────────────
 notebook = ttk.Notebook(root)
 tab1 = ttk.Frame(notebook)
 tab2 = ttk.Frame(notebook)
@@ -296,9 +242,8 @@ notebook.add(tab3, text="👷 Empleados")
 notebook.add(tab4, text="🦺 Seguridad")
 notebook.pack(expand=True, fill="both", padx=6, pady=(0,6))
 
-# ══════════════════════════════════════════════════════════
-#  TAB 1 — YACIMIENTOS
-# ══════════════════════════════════════════════════════════
+
+# TAB 1 - YACIMIENTOS
 campos_yacimiento = ["Código","Nombre","Ubicación","Mineral","Método","Fecha","Reservas","Vida","Estado"]
 entradas_yacimiento = {}
 img_path_yacimiento = {"ruta": ""}
@@ -323,16 +268,13 @@ for i, campo in enumerate(campos_yacimiento):
     entrada.grid(row=i, column=1, padx=5, pady=2)
     entradas_yacimiento[campo] = entrada
 
-img_preview_yac = tk.Label(form1, text="Sin imagen", width=15, height=7,
-                            relief="groove", bg="#f0f0f0")
+img_preview_yac = tk.Label(form1, text="Sin imagen", width=15, height=7, relief="groove", bg="#f0f0f0")
 img_preview_yac.grid(row=0, column=2, rowspan=5, padx=10, pady=5)
 registrar(img_preview_yac, "img_label")
 
 def seleccionar_imagen_yacimiento():
-    ruta = filedialog.askopenfilename(
-        title="Seleccionar imagen",
-        filetypes=[("Imágenes", "*.jpg *.jpeg *.png *.gif"), ("Todos", "*.*")]
-    )
+    ruta = filedialog.askopenfilename(title="Seleccionar imagen",
+        filetypes=[("Imágenes", "*.jpg *.jpeg *.png *.gif"), ("Todos", "*.*")])
     if not ruta:
         return
     if os.path.splitext(ruta)[1].lower() not in [".jpg", ".jpeg", ".png", ".gif"]:
@@ -453,66 +395,21 @@ def eliminar_yacimiento():
     cargar_yacimientos()
 
 def exportar_yacimientos_excel():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT codigo,nombre,ubicacion,mineral,metodo,fecha,reservas,vida,estado FROM yacimientos")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".xlsx",
-        filetypes=[("Excel", "*.xlsx")], title="Guardar Excel")
-    if not archivo:
-        return
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Yacimientos"
-    ws.append(campos_yacimiento)
-    for fila in filas:
-        ws.append(list(fila))
-    wb.save(archivo)
-    messagebox.showinfo("OK", "Excel guardado.")
+    exportar_con_filtro_excel("Yacimientos", "yacimientos", campos_yacimiento, col_fecha=5, col_estado=8)
 
 def exportar_yacimientos_pdf():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT codigo,nombre,ubicacion,mineral,metodo,fecha,reservas,vida,estado FROM yacimientos")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".pdf",
-        filetypes=[("PDF", "*.pdf")], title="Guardar PDF")
-    if not archivo:
-        return
-    doc = SimpleDocTemplate(archivo, pagesize=landscape(A4),
-                            rightMargin=1.5*cm, leftMargin=1.5*cm,
-                            topMargin=2*cm, bottomMargin=2*cm)
-    styles = getSampleStyleSheet()
-    elementos = [Paragraph("Reporte de Yacimientos", styles["Title"]), Spacer(1, 0.5*cm)]
-    data = [campos_yacimiento] + [list(f) for f in filas]
-    tabla = Table(data, repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,0),  colors.HexColor("#1a3a5c")),
-        ("TEXTCOLOR",     (0,0), (-1,0),  colors.white),
-        ("FONTNAME",      (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",      (0,0), (-1,-1), 8),
-        ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.HexColor("#ebf3fb"), colors.white]),
-        ("GRID",          (0,0), (-1,-1), 0.5, colors.grey),
-        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
-        ("TOPPADDING",    (0,0), (-1,-1), 4),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 4),
-    ]))
-    elementos.append(tabla)
-    doc.build(elementos)
-    messagebox.showinfo("OK", "PDF guardado.")
+    exportar_con_filtro_pdf("Yacimientos", "yacimientos", campos_yacimiento, col_fecha=5, col_estado=8)
 
 btnframe1 = tk.Frame(tab1)
 btnframe1.pack(pady=6)
 registrar(btnframe1, "bg")
-tk.Button(btnframe1, text="💾 Guardar",       bg="green",   fg="white", command=guardar_yacimiento).pack(side="left", padx=3)
-tk.Button(btnframe1, text="✏ Actualizar",    bg="blue",    fg="white", command=actualizar_yacimiento).pack(side="left", padx=3)
-tk.Button(btnframe1, text="🔄 Limpiar",       bg="orange",              command=limpiar_yacimiento).pack(side="left", padx=3)
-tk.Button(btnframe1, text="🗑 Eliminar",      bg="red",     fg="white", command=eliminar_yacimiento).pack(side="left", padx=3)
-tk.Button(btnframe1, text="📊 Excel",         bg="#1a5c8a", fg="white", command=exportar_yacimientos_excel).pack(side="left", padx=3)
-tk.Button(btnframe1, text="📄 PDF",           bg="#8a1a1a", fg="white", command=exportar_yacimientos_pdf).pack(side="left", padx=3)
-tk.Button(btnframe1, text="🖼 Imagen",        bg="#6a3a8a", fg="white", command=seleccionar_imagen_yacimiento).pack(side="left", padx=3)
+tk.Button(btnframe1, text="💾 Guardar",    bg="green",   fg="white", command=guardar_yacimiento).pack(side="left", padx=3)
+tk.Button(btnframe1, text="✏ Actualizar", bg="blue",    fg="white", command=actualizar_yacimiento).pack(side="left", padx=3)
+tk.Button(btnframe1, text="🔄 Limpiar",    bg="orange",              command=limpiar_yacimiento).pack(side="left", padx=3)
+tk.Button(btnframe1, text="🗑 Eliminar",   bg="red",     fg="white", command=eliminar_yacimiento).pack(side="left", padx=3)
+tk.Button(btnframe1, text="📊 Excel",      bg="#1a5c8a", fg="white", command=exportar_yacimientos_excel).pack(side="left", padx=3)
+tk.Button(btnframe1, text="📄 PDF",        bg="#8a1a1a", fg="white", command=exportar_yacimientos_pdf).pack(side="left", padx=3)
+tk.Button(btnframe1, text="🖼 Imagen",     bg="#6a3a8a", fg="white", command=seleccionar_imagen_yacimiento).pack(side="left", padx=3)
 
 tabla_yacimientos = ttk.Treeview(tab1, columns=campos_yacimiento, show="headings", height=6)
 for c in campos_yacimiento:
@@ -530,9 +427,8 @@ def cargar_yacimientos():
         tabla_yacimientos.insert("", tk.END, values=fila)
     con.close()
 
-# ══════════════════════════════════════════════════════════
-#  TAB 2 — MAQUINARIA
-# ══════════════════════════════════════════════════════════
+
+# TAB 2 - MAQUINARIA
 campos_maquinaria = ["Serie","Tipo","Marca","Modelo","Capacidad","Año","Horas","Combustible","Ubicación","Estado"]
 entradas_maquinaria = {}
 
@@ -637,55 +533,10 @@ def eliminar_maquinaria():
     cargar_maquinaria()
 
 def exportar_maquinaria_excel():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM maquinaria")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".xlsx",
-        filetypes=[("Excel", "*.xlsx")], title="Guardar Excel")
-    if not archivo:
-        return
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Maquinaria"
-    ws.append(campos_maquinaria)
-    for fila in filas:
-        ws.append(list(fila))
-    wb.save(archivo)
-    messagebox.showinfo("OK", "Excel guardado.")
+    exportar_con_filtro_excel("Maquinaria", "maquinaria", campos_maquinaria, col_fecha=None, col_estado=9)
 
 def exportar_maquinaria_pdf():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM maquinaria")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".pdf",
-        filetypes=[("PDF", "*.pdf")], title="Guardar PDF")
-    if not archivo:
-        return
-    doc = SimpleDocTemplate(archivo, pagesize=landscape(A4),
-                            rightMargin=1.5*cm, leftMargin=1.5*cm,
-                            topMargin=2*cm, bottomMargin=2*cm)
-    styles = getSampleStyleSheet()
-    elementos = [Paragraph("Reporte de Maquinaria", styles["Title"]), Spacer(1, 0.5*cm)]
-    data = [campos_maquinaria] + [list(f) for f in filas]
-    tabla = Table(data, repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,0),  colors.HexColor("#1a3a5c")),
-        ("TEXTCOLOR",     (0,0), (-1,0),  colors.white),
-        ("FONTNAME",      (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",      (0,0), (-1,-1), 8),
-        ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.HexColor("#ebf3fb"), colors.white]),
-        ("GRID",          (0,0), (-1,-1), 0.5, colors.grey),
-        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
-        ("TOPPADDING",    (0,0), (-1,-1), 4),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 4),
-    ]))
-    elementos.append(tabla)
-    doc.build(elementos)
-    messagebox.showinfo("OK", "PDF guardado.")
+    exportar_con_filtro_pdf("Maquinaria", "maquinaria", campos_maquinaria, col_fecha=None, col_estado=9)
 
 btnframe2 = tk.Frame(tab2)
 btnframe2.pack(pady=6)
@@ -713,9 +564,8 @@ def cargar_maquinaria():
         tabla_maquinaria.insert("", tk.END, values=fila)
     con.close()
 
-# ══════════════════════════════════════════════════════════
-#  TAB 3 — EMPLEADOS
-# ══════════════════════════════════════════════════════════
+
+# TAB 3 - EMPLEADOS
 campos_empleados = ["ID","Nombre","Cargo","Edad","Teléfono","Correo","Dirección","Fecha ingreso","Salario"]
 entradas_empleados = {}
 img_path_empleado = {"ruta": ""}
@@ -740,16 +590,13 @@ for i, campo in enumerate(campos_empleados):
     entrada.grid(row=i, column=1, padx=5, pady=2)
     entradas_empleados[campo] = entrada
 
-img_preview_emp = tk.Label(form3, text="Sin imagen", width=15, height=7,
-                            relief="groove", bg="#f0f0f0")
+img_preview_emp = tk.Label(form3, text="Sin imagen", width=15, height=7, relief="groove", bg="#f0f0f0")
 img_preview_emp.grid(row=0, column=2, rowspan=5, padx=10, pady=5)
 registrar(img_preview_emp, "img_label")
 
 def seleccionar_imagen_empleado():
-    ruta = filedialog.askopenfilename(
-        title="Seleccionar imagen",
-        filetypes=[("Imágenes", "*.jpg *.jpeg *.png *.gif"), ("Todos", "*.*")]
-    )
+    ruta = filedialog.askopenfilename(title="Seleccionar imagen",
+        filetypes=[("Imágenes", "*.jpg *.jpeg *.png *.gif"), ("Todos", "*.*")])
     if not ruta:
         return
     if os.path.splitext(ruta)[1].lower() not in [".jpg", ".jpeg", ".png", ".gif"]:
@@ -879,55 +726,10 @@ def eliminar_empleado():
     cargar_empleados()
 
 def exportar_empleados_excel():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT id,nombre,cargo,edad,telefono,correo,direccion,fecha_ingreso,salario FROM empleados")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".xlsx",
-        filetypes=[("Excel", "*.xlsx")], title="Guardar Excel")
-    if not archivo:
-        return
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Empleados"
-    ws.append(campos_empleados)
-    for fila in filas:
-        ws.append(list(fila))
-    wb.save(archivo)
-    messagebox.showinfo("OK", "Excel guardado.")
+    exportar_con_filtro_excel("Empleados", "empleados", campos_empleados, col_fecha=7, col_estado=None)
 
 def exportar_empleados_pdf():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT id,nombre,cargo,edad,telefono,correo,direccion,fecha_ingreso,salario FROM empleados")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".pdf",
-        filetypes=[("PDF", "*.pdf")], title="Guardar PDF")
-    if not archivo:
-        return
-    doc = SimpleDocTemplate(archivo, pagesize=landscape(A4),
-                            rightMargin=1.5*cm, leftMargin=1.5*cm,
-                            topMargin=2*cm, bottomMargin=2*cm)
-    styles = getSampleStyleSheet()
-    elementos = [Paragraph("Reporte de Empleados", styles["Title"]), Spacer(1, 0.5*cm)]
-    data = [campos_empleados] + [list(f) for f in filas]
-    tabla = Table(data, repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,0),  colors.HexColor("#1a3a5c")),
-        ("TEXTCOLOR",     (0,0), (-1,0),  colors.white),
-        ("FONTNAME",      (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",      (0,0), (-1,-1), 8),
-        ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.HexColor("#ebf3fb"), colors.white]),
-        ("GRID",          (0,0), (-1,-1), 0.5, colors.grey),
-        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
-        ("TOPPADDING",    (0,0), (-1,-1), 4),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 4),
-    ]))
-    elementos.append(tabla)
-    doc.build(elementos)
-    messagebox.showinfo("OK", "PDF guardado.")
+    exportar_con_filtro_pdf("Empleados", "empleados", campos_empleados, col_fecha=7, col_estado=None)
 
 btnframe3 = tk.Frame(tab3)
 btnframe3.pack(pady=6)
@@ -956,9 +758,8 @@ def cargar_empleados():
         tabla_empleados.insert("", tk.END, values=fila)
     con.close()
 
-# ══════════════════════════════════════════════════════════
-#  TAB 4 — SEGURIDAD
-# ══════════════════════════════════════════════════════════
+
+# TAB 4 - SEGURIDAD
 campos_seguridad = ["ID","Zona","Riesgo","Descripción","Fecha","Responsable","Acción","Estado"]
 entradas_seguridad = {}
 
@@ -1065,55 +866,10 @@ def eliminar_seguridad():
     cargar_seguridad()
 
 def exportar_seguridad_excel():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM seguridad")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".xlsx",
-        filetypes=[("Excel", "*.xlsx")], title="Guardar Excel")
-    if not archivo:
-        return
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Seguridad"
-    ws.append(campos_seguridad)
-    for fila in filas:
-        ws.append(list(fila))
-    wb.save(archivo)
-    messagebox.showinfo("OK", "Excel guardado.")
+    exportar_con_filtro_excel("Seguridad", "seguridad", campos_seguridad, col_fecha=4, col_estado=7)
 
 def exportar_seguridad_pdf():
-    con = conectar()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM seguridad")
-    filas = cur.fetchall()
-    con.close()
-    archivo = filedialog.asksaveasfilename(defaultextension=".pdf",
-        filetypes=[("PDF", "*.pdf")], title="Guardar PDF")
-    if not archivo:
-        return
-    doc = SimpleDocTemplate(archivo, pagesize=landscape(A4),
-                            rightMargin=1.5*cm, leftMargin=1.5*cm,
-                            topMargin=2*cm, bottomMargin=2*cm)
-    styles = getSampleStyleSheet()
-    elementos = [Paragraph("Reporte de Seguridad", styles["Title"]), Spacer(1, 0.5*cm)]
-    data = [campos_seguridad] + [list(f) for f in filas]
-    tabla = Table(data, repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,0),  colors.HexColor("#1a3a5c")),
-        ("TEXTCOLOR",     (0,0), (-1,0),  colors.white),
-        ("FONTNAME",      (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",      (0,0), (-1,-1), 8),
-        ("ROWBACKGROUNDS",(0,1), (-1,-1), [colors.HexColor("#ebf3fb"), colors.white]),
-        ("GRID",          (0,0), (-1,-1), 0.5, colors.grey),
-        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
-        ("TOPPADDING",    (0,0), (-1,-1), 4),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 4),
-    ]))
-    elementos.append(tabla)
-    doc.build(elementos)
-    messagebox.showinfo("OK", "PDF guardado.")
+    exportar_con_filtro_pdf("Seguridad", "seguridad", campos_seguridad, col_fecha=4, col_estado=7)
 
 btnframe4 = tk.Frame(tab4)
 btnframe4.pack(pady=6)
@@ -1141,7 +897,8 @@ def cargar_seguridad():
         tabla_seguridad.insert("", tk.END, values=fila)
     con.close()
 
-# ── Cargar datos y aplicar tema inicial ───────────────────────────────────
+
+# CARGAR DATOS E INICIAR
 cargar_yacimientos()
 cargar_maquinaria()
 cargar_empleados()

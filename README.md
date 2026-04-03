@@ -35,16 +35,21 @@ La base de datos `minesys.db` se crea automáticamente en la carpeta `models/` a
 
 ## 📁 Estructura del proyecto
 
-```
 minesys/
-├── app.py              ← Archivo principal (ejecutar este)
-├── favicon.ico         ← Se genera automáticamente al iniciar
-├── README.md
-└── models/
-    └── minesys.db      ← Base de datos SQLite (se crea automáticamente)
-```
-
----
+├── database/
+│   └── conexion.py         ← Gestiona el enlace con la base de datos
+├── models/
+│   ├── minesys.db          ← Base de datos SQLite
+│   ├── crear_tablas.py     ← Script para estructurar tablas
+│   ├── ver_tablas.py       ← Script para consultar datos en consola
+│   └── insertar_registros.py ← Datos de prueba iniciales
+├── views/
+│   └── app.py              ← Interfaz gráfica completa (ejecutar este)
+├── modulos/
+│   └── backup/             ← Archivos de respaldo
+├── favicon.ico             ← Se genera automáticamente al iniciar
+├── filtros_export.py       ← Lógica de reportes PDF y Excel
+└── README.md
 
 ## 🚀 Funcionalidades
 
